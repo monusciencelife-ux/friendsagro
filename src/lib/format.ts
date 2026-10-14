@@ -6,14 +6,14 @@ const bnNumber2 = new Intl.NumberFormat("bn-BD", {
   maximumFractionDigits: 2,
 });
 
-export function bnNum(value: number | string): string {
-  const n = typeof value === "string" ? parseFloat(value) : value;
+export function bnNum(value: number | string | null | undefined): string {
+  const n = typeof value === "string" ? parseFloat(value) : (value ?? NaN);
   if (!isFinite(n)) return "০";
   return bnNumber.format(n);
 }
 
-export function bnTaka(value: number | string): string {
-  const n = typeof value === "string" ? parseFloat(value) : value;
+export function bnTaka(value: number | string | null | undefined): string {
+  const n = typeof value === "string" ? parseFloat(value) : (value ?? NaN);
   if (!isFinite(n)) return "৳০";
   return `৳${bnNumber2.format(n)}`;
 }
