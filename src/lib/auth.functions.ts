@@ -39,7 +39,7 @@ export const bootstrapAdmin = createServerFn({ method: "POST" })
       .object({
         name: z.string().min(1),
         email: z.string().email(),
-        phone: z.string().min(6),
+        phone: z.string().optional(),
         password: z.string().min(6),
       })
       .parse(data),
