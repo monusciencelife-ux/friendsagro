@@ -59,7 +59,7 @@ export const bootstrapAdmin = createServerFn({ method: "POST" })
     await supabaseAdmin.from("profiles").insert({
       user_id: userId,
       name: data.name,
-      phone: data.phone.replace(/[^0-9]/g, ""),
+      phone: (data.phone ?? "").replace(/[^0-9]/g, ""),
     });
     await supabaseAdmin.from("user_roles").insert({ user_id: userId, role: "admin" });
     return { ok: true };
