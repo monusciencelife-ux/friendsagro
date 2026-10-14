@@ -10,15 +10,24 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as DownloadRouteImport } from './routes/download'
 import { Route as InvestorsRouteImport } from './routes/investors'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ProjectsRouteImport } from './routes/projects'
+import { Route as RequestsRouteImport } from './routes/requests'
 import { Route as SetupRouteImport } from './routes/setup'
+import { Route as AdminCashoutRouteImport } from './routes/admin.cashout'
+import { Route as ProjectsIdRouteImport } from './routes/projects.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DownloadRoute = DownloadRouteImport.update({
@@ -41,59 +50,111 @@ const ProjectsRoute = ProjectsRouteImport.update({
   path: '/projects',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RequestsRoute = RequestsRouteImport.update({
+  id: '/requests',
+  path: '/requests',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SetupRoute = SetupRouteImport.update({
   id: '/setup',
   path: '/setup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminCashoutRoute = AdminCashoutRouteImport.update({
+  id: '/cashout',
+  path: '/cashout',
+  getParentRoute: () => AdminRoute,
+} as any)
+const ProjectsIdRoute = ProjectsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ProjectsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/download': typeof DownloadRoute
   '/investors': typeof InvestorsRoute
   '/login': typeof LoginRoute
-  '/projects': typeof ProjectsRoute
+  '/projects': typeof ProjectsRouteWithChildren
+  '/requests': typeof RequestsRoute
   '/setup': typeof SetupRoute
+  '/admin/cashout': typeof AdminCashoutRoute
+  '/projects/$id': typeof ProjectsIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/download': typeof DownloadRoute
   '/investors': typeof InvestorsRoute
   '/login': typeof LoginRoute
-  '/projects': typeof ProjectsRoute
+  '/projects': typeof ProjectsRouteWithChildren
+  '/requests': typeof RequestsRoute
   '/setup': typeof SetupRoute
+  '/admin/cashout': typeof AdminCashoutRoute
+  '/projects/$id': typeof ProjectsIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/download': typeof DownloadRoute
   '/investors': typeof InvestorsRoute
   '/login': typeof LoginRoute
-  '/projects': typeof ProjectsRoute
+  '/projects': typeof ProjectsRouteWithChildren
+  '/requests': typeof RequestsRoute
   '/setup': typeof SetupRoute
+  '/admin/cashout': typeof AdminCashoutRoute
+  '/projects/$id': typeof ProjectsIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/download' | '/investors' | '/login' | '/projects' | '/setup'
-  fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/download' | '/investors' | '/login' | '/projects' | '/setup'
-  id:
-    | '__root__'
     | '/'
+    | '/admin'
     | '/download'
     | '/investors'
     | '/login'
     | '/projects'
+    | '/requests'
     | '/setup'
+    | '/admin/cashout'
+    | '/projects/$id'
+  fileRoutesByTo: FileRoutesByTo
+  to:
+    | '/'
+    | '/admin'
+    | '/download'
+    | '/investors'
+    | '/login'
+    | '/projects'
+    | '/requests'
+    | '/setup'
+    | '/admin/cashout'
+    | '/projects/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/download'
+    | '/investors'
+    | '/login'
+    | '/projects'
+    | '/requests'
+    | '/setup'
+    | '/admin/cashout'
+    | '/projects/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
   DownloadRoute: typeof DownloadRoute
   InvestorsRoute: typeof InvestorsRoute
   LoginRoute: typeof LoginRoute
-  ProjectsRoute: typeof ProjectsRoute
+  ProjectsRoute: typeof ProjectsRouteWithChildren
+  RequestsRoute: typeof RequestsRoute
   SetupRoute: typeof SetupRoute
 }
 
@@ -104,6 +165,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/download': {
@@ -134,6 +202,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProjectsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/requests': {
+      id: '/requests'
+      path: '/requests'
+      fullPath: '/requests'
+      preLoaderRoute: typeof RequestsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/setup': {
       id: '/setup'
       path: '/setup'
@@ -141,15 +216,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SetupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/cashout': {
+      id: '/admin/cashout'
+      path: '/cashout'
+      fullPath: '/admin/cashout'
+      preLoaderRoute: typeof AdminCashoutRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/projects/$id': {
+      id: '/projects/$id'
+      path: '/$id'
+      fullPath: '/projects/$id'
+      preLoaderRoute: typeof ProjectsIdRouteImport
+      parentRoute: typeof ProjectsRoute
+    }
   }
 }
 
+interface AdminRouteChildren {
+  AdminCashoutRoute: typeof AdminCashoutRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminCashoutRoute: AdminCashoutRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
+interface ProjectsRouteChildren {
+  ProjectsIdRoute: typeof ProjectsIdRoute
+}
+
+const ProjectsRouteChildren: ProjectsRouteChildren = {
+  ProjectsIdRoute: ProjectsIdRoute,
+}
+
+const ProjectsRouteWithChildren = ProjectsRoute._addFileChildren(
+  ProjectsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
   DownloadRoute: DownloadRoute,
   InvestorsRoute: InvestorsRoute,
   LoginRoute: LoginRoute,
-  ProjectsRoute: ProjectsRoute,
+  ProjectsRoute: ProjectsRouteWithChildren,
+  RequestsRoute: RequestsRoute,
   SetupRoute: SetupRoute,
 }
 export const routeTree = rootRouteImport
