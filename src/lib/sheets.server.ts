@@ -44,7 +44,7 @@ function colLetter(index: number): string {
 
 function rowsToObjects(values: string[][] | undefined): Row[] {
   if (!values || values.length < 2) return [];
-  const headers = values[0];
+  const headers = values[0] ?? [];
   return values
     .slice(1)
     .filter((r) => r.some((c) => c !== "" && c != null))
@@ -106,7 +106,7 @@ export async function updateRow(tab: TabName, id: string, patch: Row): Promise<v
   const values: string[][] = data.values ?? [];
   const rowIndex = values.findIndex((r, i) => i > 0 && r[0] === id);
   if (rowIndex === -1) throw new Error(`Row not found in ${tab}: ${id}`);
-  const current = Object.fromEntries(headers.map((h, i) => [h, values[rowIndex][i] ?? ""]));
+  const current = Object.fromEntries(headers.map((h, i) => [h, values[rowIndex]?.[i] ?? ""]));
   const merged = { ...current, ...patch };
   const endCol = colLetter(headers.length - 1);
   await sheetsApi(
