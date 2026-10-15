@@ -143,7 +143,7 @@ export const getProjects = createServerFn({ method: "GET" }).handler(async () =>
         .reduce((a, s) => a + num(v(s, "amount")), 0),
       managerName: v(p, "manager_id") ? profileName(t.profiles, v(p, "manager_id")) : "",
     }))
-    .sort((a, b) => (b.created_at ?? "").localeCompare(a.created_at ?? ""));
+    .sort((a, b) => (b["created_at"] ?? "").localeCompare(a["created_at"] ?? ""));
 });
 
 export const getProject = createServerFn({ method: "GET" })
@@ -227,7 +227,7 @@ export const getRequests = createServerFn({ method: "GET" })
         }
         return { ...r, parsed, fromName: profileName(t.profiles, v(r, "from_user_id")) } as Row & { parsed: Row; fromName: string };
       })
-      .sort((a, b) => (b.created_at ?? "").localeCompare(a.created_at ?? ""));
+      .sort((a, b) => (b["created_at"] ?? "").localeCompare(a["created_at"] ?? ""));
   });
 
 // ---------- Mutations ----------
