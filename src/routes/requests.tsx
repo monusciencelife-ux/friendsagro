@@ -82,7 +82,7 @@ function RequestsPage() {
             <div key={r["id"]} className="stat-card flex flex-wrap items-center gap-3">
               <div className="min-w-0 flex-1">
                 <p className="font-bold">
-                  {r["fromName"]} — {TYPE_LABEL[r["type"]] ?? r["type"]}
+                  {r["fromName"]} — {TYPE_LABEL[r["type"] ?? ""] ?? r["type"]}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {r["parsed"]?.["amount"] ? `${bnTaka(r["parsed"]["amount"])} · ` : ""}
@@ -99,19 +99,19 @@ function RequestsPage() {
                       : "bg-destructive/10 text-destructive"
                 }`}
               >
-                {STATUS_LABEL[r["status"]] ?? r["status"]}
+                {STATUS_LABEL[r["status"] ?? ""] ?? r["status"]}
               </span>
               {r["status"] === "pending" && (
                 <div className="flex gap-2">
                   <button
-                    onClick={() => review.mutate({ id: r["id"], decision: "approved" })}
+                    onClick={() => review.mutate({ id: r["id"] ?? "", decision: "approved" })}
                     disabled={review.isPending}
                     className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
                   >
                     <Check className="h-3.5 w-3.5" /> অনুমোদন
                   </button>
                   <button
-                    onClick={() => review.mutate({ id: r["id"], decision: "rejected" })}
+                    onClick={() => review.mutate({ id: r["id"] ?? "", decision: "rejected" })}
                     disabled={review.isPending}
                     className="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs font-semibold text-destructive hover:bg-destructive/10 disabled:opacity-60"
                   >

@@ -44,7 +44,7 @@ function DownloadPage() {
       const XLSX = await import("xlsx");
       const wb = XLSX.utils.book_new();
       for (const tab of Object.keys(TABS) as (keyof typeof TABS)[]) {
-        const headers = TABS[tab] as readonly string[];
+        const headers = [...TABS[tab]] as string[];
         const rows = (data as Record<string, Record<string, string>[]>)[tab] ?? [];
         const aoa = [headers, ...rows.map((r) => headers.map((h) => r[h] ?? ""))];
         const ws = XLSX.utils.aoa_to_sheet(aoa);
