@@ -82,7 +82,7 @@ export async function readTabs<T extends TabName>(tabs: T[], fresh = false): Pro
     const data = await sheetsApi(`/spreadsheets/${SPREADSHEET_ID}/values:batchGet?${qs}`);
     const ranges: any[] = data.valueRanges ?? [];
     ranges.forEach((vr, i) => {
-      cache.set(missing[i], { at: Date.now(), data: rowsToObjects(vr.values) });
+      cache.set(missing[i]!, { at: Date.now(), data: rowsToObjects(vr.values) });
     });
   }
   const out = {} as Record<T, Row[]>;

@@ -161,13 +161,13 @@ export const getProject = createServerFn({ method: "GET" })
       .sort((a, b) => v(a, "date").localeCompare(v(b, "date")));
     const distributions = t.profit_distributions
       .filter((d) => v(d, "project_id") === pid)
-      .map((d) => ({ ...d, investorName: profileName(t.profiles, v(d, "investor_id")) }));
+      .map((d) => ({ ...d, investorName: profileName(t.profiles, v(d, "investor_id")) }) as Row);
     const snapshots = t.percentage_snapshots
       .filter((s) => v(s, "project_id") === pid)
-      .map((s) => ({ ...s, investorName: profileName(t.profiles, v(s, "investor_id")) }));
+      .map((s) => ({ ...s, investorName: profileName(t.profiles, v(s, "investor_id")) }) as Row);
     const chat = t.chat_messages
       .filter((m) => v(m, "project_id") === pid)
-      .map((m) => ({ ...m, senderName: profileName(t.profiles, v(m, "sender_id")) }))
+      .map((m) => ({ ...m, senderName: profileName(t.profiles, v(m, "sender_id")) }) as Row)
       .sort((a, b) => v(a, "created_at").localeCompare(v(b, "created_at")));
     return { project, steps, sales, distributions, snapshots, chat };
   });
@@ -225,9 +225,9 @@ export const getRequests = createServerFn({ method: "GET" })
         } catch {
           parsed = {};
         }
-        return { ...r, parsed, fromName: profileName(t.profiles, v(r, "from_user_id")) };
+        return { ...r, parsed, fromName: profileName(t.profiles, v(r, "from_user_id")) } as Row & { parsed: Row; fromName: string };
       })
-      .sort((a, b) => v(b, "created_at").localeCompare(v(a, "created_at")));
+      .sort((a, b) => (b.created_at ?? "").localeCompare(a.created_at ?? ""));
   });
 
 // ---------- Mutations ----------
