@@ -8,6 +8,13 @@
       "when": 1791932666425,
       "tag": "0000_auth_profiles_roles",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792243703611,
+      "tag": "0001_sheets_financial_operation_guard",
+      "breakpoints": true
     }
   ]
 }

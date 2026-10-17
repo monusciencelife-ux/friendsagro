@@ -44,6 +44,33 @@ export type Database = {
         }
         Relationships: []
       }
+      sheet_operations: {
+        Row: {
+          applied_at: string | null
+          created_at: string
+          created_by: string
+          operation_key: string
+          plan: Json | null
+          state: string
+        }
+        Insert: {
+          applied_at?: string | null
+          created_at?: string
+          created_by: string
+          operation_key: string
+          plan?: Json | null
+          state?: string
+        }
+        Update: {
+          applied_at?: string | null
+          created_at?: string
+          created_by?: string
+          operation_key?: string
+          plan?: Json | null
+          state?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -67,12 +94,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      begin_sheet_operation: { Args: { _key: string }; Returns: Json }
+      cancel_unprepared_sheet_operation: {
+        Args: { _key: string }
+        Returns: undefined
+      }
+      finish_sheet_operation: { Args: { _key: string }; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      prepare_sheet_operation: {
+        Args: { _key: string; _plan: Json }
+        Returns: undefined
       }
     }
     Enums: {
