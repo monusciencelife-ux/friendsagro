@@ -7,4 +7,8 @@
 - [ ] Auth: admin-created users, phone/email+password login, roles
 - [ ] Public pages: / dashboard, /projects, /projects/$id, /investors, /download
 - [ ] Admin pages: /requests, /admin, /admin/cashout
-- [ ] End-to-end test all workflows
+- [ ] Investor-only financial history with running balances
+- [ ] Complete dated financial breakdown for active/completed projects
+- [ ] Confirmed project-specific profit/loss allocations, consistent summaries and duplicate protection
+- [ ] Controlled corrections and historical allocation reconciliation
+- [ ] End-to-end test requested accounting workflows
