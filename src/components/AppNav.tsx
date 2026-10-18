@@ -77,12 +77,13 @@ export function AppNav() {
           Village Agro
         </Link>
 
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav className="hidden items-center gap-1 xl:flex">
           {links.map((l) => (
             <Link key={l.to} to={l.to} className={linkCls(l.to)}>
               {l.label}
             </Link>
           ))}
+          {signedIn && <Link to="/account" className={linkCls('/account')}>আমার হিসাব</Link>}
           {signedIn && session?.isAdmin &&
             adminLinks.map((l) => (
               <Link key={l.to} to={l.to} className={linkCls(l.to)}>
@@ -91,7 +92,7 @@ export function AppNav() {
             ))}
         </nav>
 
-        <div className="hidden items-center gap-2 md:flex">
+        <div className="hidden items-center gap-2 xl:flex">
           {signedIn ? (
             <button
               onClick={handleSignOut}
@@ -110,7 +111,7 @@ export function AppNav() {
         </div>
 
         <button
-          className="rounded-lg p-2 text-muted-foreground hover:bg-accent md:hidden"
+          className="rounded-lg p-2 text-muted-foreground hover:bg-accent xl:hidden"
           onClick={() => setOpen(!open)}
           aria-label="মেনু"
         >
@@ -119,12 +120,13 @@ export function AppNav() {
       </div>
 
       {open && (
-        <nav className="flex flex-col gap-1 border-t px-4 py-3 md:hidden">
+        <nav className="flex flex-col gap-1 border-t px-4 py-3 xl:hidden">
           {links.map((l) => (
             <Link key={l.to} to={l.to} className={linkCls(l.to)} onClick={() => setOpen(false)}>
               {l.label}
             </Link>
           ))}
+          {signedIn && <Link to="/account" className={linkCls('/account')} onClick={() => setOpen(false)}>আমার হিসাব</Link>}
           {signedIn && session?.isAdmin &&
             adminLinks.map((l) => (
               <Link key={l.to} to={l.to} className={linkCls(l.to)} onClick={() => setOpen(false)}>

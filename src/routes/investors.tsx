@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Crown, UserRound } from "lucide-react";
 import { getInvestors } from "@/lib/data.functions";
@@ -37,7 +37,7 @@ function InvestorsPage() {
       ) : (
         <div className="space-y-3">
           {(data ?? []).map((inv, i) => (
-            <div key={inv.id} className="stat-card flex items-center gap-4">
+            <Link to="/investor/$id" params={{id: inv.id}} key={inv.id} className="stat-card flex items-center gap-4 focus-visible:outline-2 focus-visible:outline-ring">
               <span className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground">
                 <UserRound className="h-6 w-6" />
                 {i === 0 && (
@@ -54,7 +54,7 @@ function InvestorsPage() {
                 <p className="font-bold text-primary">{bnTaka(inv.total)}</p>
                 <p className="text-xs text-muted-foreground">{bnPercent(inv.pct)}</p>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}

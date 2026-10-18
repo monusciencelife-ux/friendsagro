@@ -14,4 +14,9 @@ describe("App routing", () => {
 
     expect(matches.at(-1)?.routeId).not.toBe(rootRouteId);
   });
+  it('matches the own account and selected investor history pages', () => {
+    const router = createRouter({ routeTree, context: { queryClient: new QueryClient() } });
+    expect(router.matchRoutes('/account').at(-1)?.routeId).toBe('/account');
+    expect(router.matchRoutes('/investor/ac011f9a-f099-489b-9a13-9371eecac8bd').at(-1)?.routeId).toBe('/investor/$id');
+  });
 });

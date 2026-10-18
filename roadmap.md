@@ -8,6 +8,7 @@
 - [ ] Public pages: / dashboard, /projects, /projects/$id, /investors, /download
 - [ ] Admin pages: /requests, /admin, /admin/cashout
 - [ ] Investor-only financial history with running balances
+- [ ] Current request: own investment breakdown, detailed list/chart, permission-checked investor profile history
 - [ ] Complete dated financial breakdown for active/completed projects
 - [ ] Confirmed project-specific profit/loss allocations, consistent summaries and duplicate protection
 - [ ] Controlled corrections and historical allocation reconciliation

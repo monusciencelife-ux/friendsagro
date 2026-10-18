@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AccountRouteImport } from './routes/account'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as DownloadRouteImport } from './routes/download'
 import { Route as InvestorsRouteImport } from './routes/investors'
@@ -18,11 +19,17 @@ import { Route as ProjectsRouteImport } from './routes/projects'
 import { Route as RequestsRouteImport } from './routes/requests'
 import { Route as SetupRouteImport } from './routes/setup'
 import { Route as AdminCashoutRouteImport } from './routes/admin.cashout'
+import { Route as InvestorIdRouteImport } from './routes/investor.$id'
 import { Route as ProjectsIdRouteImport } from './routes/projects.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountRoute = AccountRouteImport.update({
+  id: '/account',
+  path: '/account',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -65,6 +72,11 @@ const AdminCashoutRoute = AdminCashoutRouteImport.update({
   path: '/cashout',
   getParentRoute: () => AdminRoute,
 } as any)
+const InvestorIdRoute = InvestorIdRouteImport.update({
+  id: '/investor/$id',
+  path: '/investor/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProjectsIdRoute = ProjectsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -73,6 +85,7 @@ const ProjectsIdRoute = ProjectsIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/account': typeof AccountRoute
   '/admin': typeof AdminRouteWithChildren
   '/download': typeof DownloadRoute
   '/investors': typeof InvestorsRoute
@@ -81,10 +94,12 @@ export interface FileRoutesByFullPath {
   '/requests': typeof RequestsRoute
   '/setup': typeof SetupRoute
   '/admin/cashout': typeof AdminCashoutRoute
+  '/investor/$id': typeof InvestorIdRoute
   '/projects/$id': typeof ProjectsIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/account': typeof AccountRoute
   '/admin': typeof AdminRouteWithChildren
   '/download': typeof DownloadRoute
   '/investors': typeof InvestorsRoute
@@ -93,11 +108,13 @@ export interface FileRoutesByTo {
   '/requests': typeof RequestsRoute
   '/setup': typeof SetupRoute
   '/admin/cashout': typeof AdminCashoutRoute
+  '/investor/$id': typeof InvestorIdRoute
   '/projects/$id': typeof ProjectsIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/account': typeof AccountRoute
   '/admin': typeof AdminRouteWithChildren
   '/download': typeof DownloadRoute
   '/investors': typeof InvestorsRoute
@@ -106,12 +123,14 @@ export interface FileRoutesById {
   '/requests': typeof RequestsRoute
   '/setup': typeof SetupRoute
   '/admin/cashout': typeof AdminCashoutRoute
+  '/investor/$id': typeof InvestorIdRoute
   '/projects/$id': typeof ProjectsIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/account'
     | '/admin'
     | '/download'
     | '/investors'
@@ -120,10 +139,12 @@ export interface FileRouteTypes {
     | '/requests'
     | '/setup'
     | '/admin/cashout'
+    | '/investor/$id'
     | '/projects/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/account'
     | '/admin'
     | '/download'
     | '/investors'
@@ -132,10 +153,12 @@ export interface FileRouteTypes {
     | '/requests'
     | '/setup'
     | '/admin/cashout'
+    | '/investor/$id'
     | '/projects/$id'
   id:
     | '__root__'
     | '/'
+    | '/account'
     | '/admin'
     | '/download'
     | '/investors'
@@ -144,11 +167,13 @@ export interface FileRouteTypes {
     | '/requests'
     | '/setup'
     | '/admin/cashout'
+    | '/investor/$id'
     | '/projects/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AccountRoute: typeof AccountRoute
   AdminRoute: typeof AdminRouteWithChildren
   DownloadRoute: typeof DownloadRoute
   InvestorsRoute: typeof InvestorsRoute
@@ -156,6 +181,7 @@ export interface RootRouteChildren {
   ProjectsRoute: typeof ProjectsRouteWithChildren
   RequestsRoute: typeof RequestsRoute
   SetupRoute: typeof SetupRoute
+  InvestorIdRoute: typeof InvestorIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -165,6 +191,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account': {
+      id: '/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AccountRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -223,6 +256,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCashoutRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/investor/$id': {
+      id: '/investor/$id'
+      path: '/investor/$id'
+      fullPath: '/investor/$id'
+      preLoaderRoute: typeof InvestorIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/projects/$id': {
       id: '/projects/$id'
       path: '/$id'
@@ -257,6 +297,7 @@ const ProjectsRouteWithChildren = ProjectsRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AccountRoute: AccountRoute,
   AdminRoute: AdminRouteWithChildren,
   DownloadRoute: DownloadRoute,
   InvestorsRoute: InvestorsRoute,
@@ -264,6 +305,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProjectsRoute: ProjectsRouteWithChildren,
   RequestsRoute: RequestsRoute,
   SetupRoute: SetupRoute,
+  InvestorIdRoute: InvestorIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
