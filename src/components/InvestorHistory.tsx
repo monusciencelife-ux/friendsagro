@@ -14,7 +14,7 @@ export function InvestorHistory({investorId}: {investorId?: string}) {
   const [type,setType] = useState('all');
   const [from,setFrom] = useState('');
   const [to,setTo] = useState('');
-  const query = useQuery({queryKey:['investor-history',investorId ?? 'self'],queryFn: () => fetchHistory({data:{investorId}}),retry:false});
+  const query = useQuery({queryKey:['investor-history',investorId ?? 'self'],queryFn: () => fetchHistory({data:investorId ? {investorId} : {}}),retry:false});
   const data = query.data;
   const rows = (data?.transactions ?? []).filter(t => (type === 'all' || type === t.type) && (!from || t.date.slice(0,10) >= from) && (!to || t.date.slice(0,10) <= to));
   return <div className="page-container">

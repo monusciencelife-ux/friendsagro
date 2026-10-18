@@ -202,9 +202,12 @@ export const getInvestors = createServerFn({ method: "GET" }).handler(async () =
     .sort((a, b) => b.total - a.total);
 });
 
-export const getDownloadData = createServerFn({ method: "GET" }).handler(async () => {
-  return loadAll(true);
-});
+export const getDownloadData = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({context}) => {
+    await requireAdmin(context);
+    return loadAll(true);
+  });
 
 export const getBillCauses = createServerFn({ method: "GET" }).handler(async () => {
   const t = await readTabs(["bill_causes"]);
