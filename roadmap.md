@@ -9,6 +9,7 @@
 - [ ] Admin pages: /requests, /admin, /admin/cashout
 - [ ] Investor-only financial history with running balances
 - [x] Current request: own investment breakdown, detailed list/chart, permission-checked investor profile history
+- [ ] Current request: all four linked investors and administrators can view every investor profile and history; verify shared access and sign-in protection
 - [ ] Complete dated financial breakdown for active/completed projects
 - [ ] Confirmed project-specific profit/loss allocations, consistent summaries and duplicate protection
 - [ ] Controlled corrections and historical allocation reconciliation
