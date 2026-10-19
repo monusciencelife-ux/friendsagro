@@ -10,5 +10,5 @@
 <!-- LOVABLE:END -->
 
 - Investor history uses a public page shell with component-called authenticated server functions; no private data is loaded during public prerender.
-- Investment history permissions resolve the signed-in Cloud profile ID server-side and allow only that profile or a verified administrator; Sheets investor IDs reference original profile UUIDs.
+- Investment history permissions resolve the signed-in Cloud profile ID and administrator role server-side before applying the shared-history access rule; Sheets investor IDs reference original profile UUIDs.
 - List and chart read the same filtered, server-returned transaction model so monthly investment totals match historical rows.

@@ -1,6 +1,6 @@
 export type HistoryRow = Record<string, string>;
 export function canReadInvestorHistory(isAdmin: boolean, ownProfileId: string | null, targetId: string) {
-  return isAdmin || (ownProfileId !== null && ownProfileId === targetId);
+  return targetId.length > 0 && (isAdmin || Boolean(ownProfileId));
 }
 export function buildInvestmentHistory(investments: HistoryRow[], cashouts: HistoryRow[], investorId: string) {
   const read = (r: HistoryRow, k: string) => r[k] ?? '';

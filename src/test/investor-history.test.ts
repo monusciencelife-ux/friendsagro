@@ -2,9 +2,19 @@ import { describe, expect, it } from 'vitest';
 import { buildInvestmentHistory, canReadInvestorHistory } from '@/lib/investor-history';
 describe('Investor transaction permissions', () => {
   it('allows an investor to read their own profile', () => expect(canReadInvestorHistory(false,'murad','murad')).toBe(true));
-  it('denies another investor history', () => expect(canReadInvestorHistory(false,'murad','rayhan')).toBe(false));
+  it.each(['murad', 'rayhan', 'firoze', 'jahid'])('allows %s to read all four investor histories', (viewer) => {
+    for (const target of ['murad', 'rayhan', 'firoze', 'jahid']) {
+      expect(canReadInvestorHistory(false, viewer, target)).toBe(true);
+    }
+  });
   it('allows administrators to read selected investor history', () => expect(canReadInvestorHistory(true,'admin','rayhan')).toBe(true));
   it('denies users without a linked profile', () => expect(canReadInvestorHistory(false,null,'rayhan')).toBe(false));
+  it('allows administrators without an investor profile to read all four histories', () => {
+    for (const target of ['murad', 'rayhan', 'firoze', 'jahid']) {
+      expect(canReadInvestorHistory(true, null, target)).toBe(true);
+    }
+  });
+  it('denies an empty profile identifier', () => expect(canReadInvestorHistory(false,'','rayhan')).toBe(false));
 });
 describe('Investment breakdown', () => {
   const deposits = [
