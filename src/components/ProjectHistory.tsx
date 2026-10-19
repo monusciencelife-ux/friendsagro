@@ -1,0 +1,48 @@
+import {useState} from 'react';
+import {Link} from '@tanstack/react-router';
+import {BarChart3, List, FileImage} from 'lucide-react';
+import {BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer} from 'recharts';
+import {Button} from '@/components/ui/button';
+import {bnDate, bnDateTime, bnNum, bnPercent, bnTaka, num} from '@/lib/format';
+import {buildProjectHistory, projectMonthlyHistory, type ProjectHistoryRow} from '@/lib/project-history';
+
+function proofUrls(value: string): string[] {
+  try {
+    const parsed: unknown = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === 'string' && /^https:\/\//.test(v)) : [];
+  } catch { return /^https:\/\//.test(value) ? [value] : []; }
+}
+const statuses: Record<string,string> = {pending:'অপেক্ষমাণ',withdrawn:'উত্তোলন হিসেবে সংরক্ষিত',credited:'তহবিলে যোগ হয়েছে',reinvested:'পুনর্বিনিয়োগ',locked:'লকড',adjustment:'সমন্বয়',approved:'অনুমোদিত',rejected:'বাতিল'};
+
+export function ProjectHistory({project,steps,sales,snapshots,distributions}: {project: ProjectHistoryRow; steps: ProjectHistoryRow[]; sales: ProjectHistoryRow[]; snapshots: ProjectHistoryRow[]; distributions: ProjectHistoryRow[]}) {
+  const [view,setView] = useState<'list'|'chart'>('list');
+  const [type,setType] = useState('all');
+  const [from,setFrom] = useState('');
+  const [to,setTo] = useState('');
+  const history = buildProjectHistory(steps,sales);
+  const rows = history.transactions.filter(row => (type === 'all' || row.type === type) && (!from || row.date.slice(0,10) >= from) && (!to || row.date.slice(0,10) <= to));
+  const monthly = projectMonthlyHistory(rows);
+  const causes = new Map<string,number>();
+  for (const row of steps) causes.set(row['reason'] || 'অন্যান্য', (causes.get(row['reason'] || 'অন্যান্য') ?? 0) + num(row['amount']));
+
+  return <>
+    <section className="mt-8 border-t pt-6">
+      <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="section-title">প্রকল্পের সম্পূর্ণ লেনদেনের ইতিহাস</h2><div role="group" aria-label="প্রকল্প হিসাব প্রদর্শন" className="flex gap-1"><Button variant={view === 'list' ? 'secondary':'ghost'} aria-pressed={view === 'list'} onClick={()=>setView('list')}><List/>তালিকা</Button><Button variant={view === 'chart' ? 'secondary':'ghost'} aria-pressed={view === 'chart'} onClick={()=>setView('chart')}><BarChart3/>চার্ট</Button></div></div>
+      <div className="my-4 flex flex-wrap gap-3">
+        <label className="text-sm">ধরন<select className="mt-1 block h-9 rounded-md border bg-background px-3" value={type} onChange={e=>setType(e.target.value)}><option value="all">সব লেনদেন</option><option value="expense">ব্যয়</option><option value="sale">বিক্রয়</option></select></label>
+        <label className="text-sm">শুরুর তারিখ<input type="date" value={from} onChange={e=>setFrom(e.target.value)} className="mt-1 block h-9 rounded-md border bg-background px-2"/></label>
+        <label className="text-sm">শেষ তারিখ<input type="date" value={to} min={from} onChange={e=>setTo(e.target.value)} className="mt-1 block h-9 rounded-md border bg-background px-2"/></label>
+      </div>
+      <p className="mb-3 text-sm text-muted-foreground">লেনদেন: {bnNum(rows.length)}</p>
+      {rows.length === 0 ? <p className="py-8 text-center text-muted-foreground">কোনো লেনদেন পাওয়া যায়নি</p> : view === 'list' ? <div className="overflow-x-auto"><table className="w-full min-w-[760px] text-left text-sm"><thead className="bg-muted"><tr>{['তারিখ','ধরন ও বিবরণ','পরিমাণ','চলতি লাভ / ক্ষতি','নথি ও লেনদেনের তথ্য'].map(label=><th key={label} className="px-3 py-3 font-semibold">{label}</th>)}</tr></thead><tbody className="divide-y">{rows.map(row=><tr key={`${row.type}-${row.id}`}><td className="whitespace-nowrap px-3 py-3">{bnDate(row.date) || '—'}</td><td className="px-3 py-3"><p className="text-xs text-muted-foreground">{row.type === 'expense' ? 'ব্যয়':'বিক্রয়'}</p><p className="font-medium">{row.description || '—'}</p>{row.note && <p className="mt-1 text-muted-foreground">{row.note}</p>}</td><td className={`whitespace-nowrap px-3 py-3 font-semibold ${row.type === 'expense' ? 'text-destructive':'text-primary'}`}>{bnTaka(row.amount)}</td><td className="whitespace-nowrap px-3 py-3">{bnTaka(row.balance)}</td><td className="max-w-72 break-words px-3 py-3"><p className="break-all text-xs text-muted-foreground">ID: {row.id}</p>{row.createdAt && <p className="mt-1 text-xs text-muted-foreground">সংরক্ষণ: {bnDateTime(row.createdAt)}</p>}{row.updatedAt && row.updatedAt !== row.createdAt && <p className="text-xs text-muted-foreground">হালনাগাদ: {bnDateTime(row.updatedAt)}</p>}{proofUrls(row.proofs).map((url,i)=><a key={url} href={url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 text-primary"><FileImage className="size-4"/>প্রমাণ {bnNum(i+1)}</a>)}</td></tr>)}</tbody></table></div> : <div className="h-80 w-full" role="img" aria-label="প্রকল্পের মাসভিত্তিক ব্যয় ও বিক্রয় চার্ট"><ResponsiveContainer width="100%" height="100%"><BarChart data={monthly} margin={{top:10,right:10,left:10,bottom:10}}><CartesianGrid stroke="var(--border)" vertical={false}/><XAxis dataKey="month" tickFormatter={v=>bnDate(`${v}-01`)} stroke="var(--muted-foreground)"/><YAxis width={85} tickFormatter={bnNum} stroke="var(--muted-foreground)"/><Tooltip formatter={v=>bnTaka(Number(v))} labelFormatter={v=>bnDate(`${v}-01`)} contentStyle={{background:'var(--card)',borderColor:'var(--border)',color:'var(--foreground)'}}/><Legend/><Bar dataKey="expense" name="ব্যয়" fill="var(--destructive)" maxBarSize={40}/><Bar dataKey="sale" name="বিক্রয়" fill="var(--chart-1)" maxBarSize={40}/></BarChart></ResponsiveContainer></div>}
+    </section>
+
+    <div className="mt-8 grid gap-8 lg:grid-cols-2">
+      <section className="border-t pt-5"><h2 className="section-title mb-4">খাতভিত্তিক ব্যয়</h2><dl className="divide-y">{[...causes.entries()].sort((a,b)=>b[1]-a[1]).map(([cause,amount])=><div key={cause} className="flex justify-between gap-3 py-2.5 text-sm"><dt className="break-words">{cause}</dt><dd className="shrink-0 font-semibold">{bnTaka(amount)}</dd></div>)}</dl>{causes.size === 0 && <p className="text-sm text-muted-foreground">কোনো ব্যয় নেই</p>}</section>
+      <section className="border-t pt-5"><h2 className="section-title mb-4">আর্থিক হিসাব</h2><dl className="divide-y">{[['মোট বিক্রয়',history.revenue],['মোট ব্যয়',history.expenses],['বিক্রয় − ব্যয়',history.result],['সংরক্ষিত লাভ / ক্ষতি',project['actual_profit']],['সংরক্ষিত বণ্টনের মোট',distributions.reduce((sum,row)=>sum+num(row['profit_amount']),0)]].map(([label,value])=><div key={String(label)} className="flex justify-between gap-3 py-2.5 text-sm"><dt>{label}</dt><dd className="shrink-0 font-semibold">{value === '' || value === undefined ? '—':bnTaka(value)}</dd></div>)}</dl>{project['status'] !== 'completed' && <p className="mt-3 text-sm text-muted-foreground">চলমান প্রকল্প — ফলাফল চূড়ান্ত নয়</p>}{project['status'] === 'completed' && project['actual_profit'] && Math.abs(num(project['actual_profit'])-history.result)>0.01 && <p className="mt-3 text-sm text-destructive">সংরক্ষিত ফলাফল ও লেনদেনের হিসাবে পার্থক্য রয়েছে।</p>}</section>
+    </div>
+
+    <section className="mt-8 border-t pt-5"><h2 className="section-title mb-4">বিনিয়োগকারীদের অংশ ও বরাদ্দ</h2>{snapshots.length === 0 ? <p className="text-sm text-muted-foreground">এই প্রকল্পের বিনিয়োগের অংশ সংরক্ষিত নেই</p> : <div className="overflow-x-auto"><table className="w-full min-w-[640px] text-left text-sm"><thead className="bg-muted"><tr>{['বিনিয়োগকারী','অংশ','লকড পরিমাণ','সংরক্ষণের তারিখ'].map(label=><th key={label} className="px-3 py-3">{label}</th>)}</tr></thead><tbody className="divide-y">{snapshots.map(row=><tr key={row['id']}><td className="px-3 py-3">{row['investor_id'] ? <Link to="/investor/$id" params={{id:row['investor_id']}} className="font-medium text-primary underline-offset-4 hover:underline">{row['investorName'] || row['investor_id']}</Link>:'—'}</td><td className="px-3 py-3">{bnPercent(num(row['percentage']))}</td><td className="px-3 py-3">{bnTaka(row['locked_amount'])}</td><td className="px-3 py-3">{bnDateTime(row['created_at']) || '—'}</td></tr>)}</tbody></table></div>}</section>
+    <section className="mt-8 border-t pt-5"><h2 className="section-title mb-4">লাভ / ক্ষতি বণ্টনের সম্পূর্ণ ইতিহাস</h2>{distributions.length === 0 ? <p className="text-sm text-muted-foreground">কোনো বণ্টন সংরক্ষিত নেই</p> : <div className="overflow-x-auto"><table className="w-full min-w-[800px] text-left text-sm"><thead className="bg-muted"><tr>{['তারিখ','বিনিয়োগকারী','লাভ / ক্ষতি','লকড পরিমাণ','অবস্থা','বিবরণ'].map(label=><th key={label} className="px-3 py-3">{label}</th>)}</tr></thead><tbody className="divide-y">{[...distributions].sort((a,b)=>(a['created_at'] ?? '').localeCompare(b['created_at'] ?? '')).map(row=><tr key={row['id']}><td className="px-3 py-3"><p>{bnDateTime(row['created_at']) || '—'}</p>{row['resolved_at'] && <p className="text-xs text-muted-foreground">নিষ্পত্তি: {bnDateTime(row['resolved_at'])}</p>}</td><td className="px-3 py-3 font-medium">{row['investorName'] || row['investor_id']}</td><td className="px-3 py-3 font-semibold">{bnTaka(row['profit_amount'])}</td><td className="px-3 py-3">{bnTaka(row['locked_amount'])}</td><td className="px-3 py-3">{statuses[row['status'] ?? ''] || row['status'] || '—'}</td><td className="max-w-64 break-words px-3 py-3"><p>{row['notes'] || '—'}</p><p className="mt-1 break-all text-xs text-muted-foreground">ID: {row['id']}</p></td></tr>)}</tbody></table></div>}</section>
+  </>;
+}

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -10,9 +10,11 @@ import {
   getProject,
   sendChatMessage,
 } from "@/lib/data.functions";
-import { bnDate, bnPercent, bnTaka, num } from "@/lib/format";
+import { bnDate, bnTaka, num } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
 import { getMySessionInfo } from "@/lib/auth.functions";
+import { ProjectHistory } from "@/components/ProjectHistory";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/projects/$id")({
   head: () => ({
@@ -34,7 +36,7 @@ function ProjectDetail() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ["project", id],
     queryFn: () => getProject({ data: { id } }),
     refetchInterval: 30_000,
@@ -56,6 +58,8 @@ function ProjectDetail() {
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["project", id] });
 
+  if (isError) return <div className="page-container" role="alert"><p className="text-destructive">প্রকল্পের তথ্য পাওয়া যায়নি।</p><Button variant="outline" onClick={() => invalidate()}>আবার চেষ্টা করুন</Button></div>;
+
   if (isLoading || !data) {
     return (
       <div className="page-container">
@@ -71,10 +75,11 @@ function ProjectDetail() {
 
   return (
     <div className="page-container">
+      <Link to="/projects" className="mb-4 inline-block text-sm text-primary">← প্রকল্প তালিকা</Link>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">{p("name")}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">শুরু: {bnDate(p("started_at"))}</p>
+          <p className="mt-1 text-sm text-muted-foreground">শুরু: {bnDate(p("started_at")) || "—"}{p("completed_at") && <> · সম্পন্ন: {bnDate(p("completed_at"))}</>}</p>
         </div>
         <span
           className={`rounded-full px-3 py-1 text-sm font-semibold ${
@@ -97,8 +102,8 @@ function ProjectDetail() {
           { label: "মোট ব্যয়", value: bnTaka(spent) },
           { label: "মোট বিক্রয়", value: bnTaka(sold) },
           {
-            label: p("status") === "completed" ? "প্রকৃত লাভ" : "বর্তমান লাভ/ক্ষতি",
-            value: bnTaka(p("status") === "completed" ? p("actual_profit") : sold - spent),
+            label: p("status") === "completed" ? "প্রকৃত লাভ / ক্ষতি" : "বর্তমান লাভ / ক্ষতি",
+            value: bnTaka(sold - spent),
           },
         ].map((s) => (
           <div key={s.label} className="stat-card">
@@ -109,7 +114,7 @@ function ProjectDetail() {
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
-        <section className="rounded-2xl border bg-card p-5">
+        <section className="border-t pt-5">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="section-title">ব্যয়ের ধাপসমূহ</h2>
             {isAdmin && p("status") === "active" && (
@@ -132,7 +137,7 @@ function ProjectDetail() {
           </ul>
         </section>
 
-        <section className="rounded-2xl border bg-card p-5">
+        <section className="border-t pt-5">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="section-title">বিক্রয়</h2>
             {isAdmin && p("status") === "active" && (
@@ -156,44 +161,15 @@ function ProjectDetail() {
         </section>
       </div>
 
-      {snapshots.length > 0 && (
-        <section className="mt-6 rounded-2xl border bg-card p-5">
-          <h2 className="section-title mb-4">লাভ বণ্টন</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b text-left text-xs text-muted-foreground">
-                  <th className="pb-2 font-medium">বিনিয়োগকারী</th>
-                  <th className="pb-2 font-medium">অংশ</th>
-                  <th className="pb-2 font-medium">লকড পরিমাণ</th>
-                  <th className="pb-2 font-medium">লাভ</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {snapshots.map((s) => {
-                  const dist = distributions.find((d) => d["snapshot_id"] === s["id"]);
-                  return (
-                    <tr key={s["id"]}>
-                      <td className="py-2.5 font-medium">{s["investorName"]}</td>
-                      <td className="py-2.5">{bnPercent(num(s["percentage"]))}</td>
-                      <td className="py-2.5">{bnTaka(s["locked_amount"])}</td>
-                      <td className="py-2.5 font-semibold text-primary">
-                        {dist ? bnTaka(dist["profit_amount"]) : "—"}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
+      <ProjectHistory project={project} steps={steps} sales={sales} snapshots={snapshots} distributions={distributions} />
+
+      {p("notes") && <section className="mt-6 border-t pt-5"><h2 className="section-title mb-3">প্রকল্পের নোট</h2><p className="whitespace-pre-wrap break-words text-sm">{p("notes")}</p></section>}
 
       {isAdmin && p("status") === "active" && (
         <CompleteButton projectId={id} onDone={invalidate} />
       )}
 
-      <section className="mt-6 rounded-2xl border bg-card p-5">
+      <section className="mt-6 border-t pt-5">
         <h2 className="section-title mb-4 flex items-center gap-2">
           <MessageSquare className="h-4 w-4" /> আলোচনা
         </h2>
