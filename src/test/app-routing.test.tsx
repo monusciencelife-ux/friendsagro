@@ -19,4 +19,10 @@ describe("App routing", () => {
     expect(router.matchRoutes('/account').at(-1)?.routeId).toBe('/account');
     expect(router.matchRoutes('/investor/ac011f9a-f099-489b-9a13-9371eecac8bd').at(-1)?.routeId).toBe('/investor/$id');
   });
+  it('matches every project detail beneath its project list layout', () => {
+    const router = createRouter({ routeTree, context: { queryClient: new QueryClient() } });
+    const matches = router.matchRoutes('/projects/c8df837e-ccd4-4727-8d9c-ecedb27c89d4');
+    expect(matches.map(match => match.routeId)).toEqual([rootRouteId, '/projects', '/projects/$id']);
+    expect(matches.at(-1)?.params).toMatchObject({id:'c8df837e-ccd4-4727-8d9c-ecedb27c89d4'});
+  });
 });

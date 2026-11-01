@@ -10,8 +10,8 @@
 - [ ] Investor-only financial history with running balances
 - [x] Current request: own investment breakdown, detailed list/chart, permission-checked investor profile history
 - [x] Current request: all four linked investors and administrators can view every investor profile and history; permission tests pass, signed-in investor sees all four histories and another investor chart, signed-out history blocked
-- [ ] Complete dated financial breakdown for active/completed projects
-- [ ] Current request: every project's complete history, itemized expenses/sales, investor allocations and visual breakdown, without changing stored records
+- [x] Complete dated financial breakdown for active/completed projects (shared read-only view; live dataset currently has one completed project)
+- [x] Current request: every project's complete history visible to everyone; fixed parent layout hiding details, verified signed-out and signed-in access, 27 expenses, 3 sales, 4 shares, 4 distributions, list filters, chart and narrow layout; 19 tests pass; stored records unchanged
 - [ ] Confirmed project-specific profit/loss allocations, consistent summaries and duplicate protection
 - [ ] Controlled corrections and historical allocation reconciliation
 - [ ] End-to-end test requested accounting workflows
