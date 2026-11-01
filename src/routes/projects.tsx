@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Briefcase } from "lucide-react";
@@ -16,8 +16,13 @@ export const Route = createFileRoute("/projects")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: ProjectsPage,
+  component: ProjectsLayout,
 });
+
+function ProjectsLayout() {
+  const hasDetail = useRouterState({ select: state => state.matches.some(match => match.routeId === '/projects/$id') });
+  return hasDetail ? <Outlet /> : <ProjectsPage />;
+}
 
 const FILTERS = [
   { key: "all", label: "সব" },
