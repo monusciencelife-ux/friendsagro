@@ -51,7 +51,8 @@ function InvestorsPage() {
                 {i === 0 && <p className="text-xs text-muted-foreground">বেশি জমা</p>}
               </div>
               <div className="text-right">
-                <p className="font-bold text-primary">{bnTaka(inv.total)}</p>
+                <p className="font-bold text-primary">{bnTaka(inv.balance)}</p>
+                <p className="text-xs text-muted-foreground">জমা {bnTaka(inv.total)} · লাভ/ক্ষতি {bnTaka(inv.profit)}</p>
                 <p className="text-xs text-muted-foreground">{bnPercent(inv.pct)}</p>
               </div>
             </Link>
