@@ -38,3 +38,10 @@ describe('Investment breakdown', () => {
     expect(result.transactions.at(-1)).toMatchObject({id:'out',note:'bank transfer',balance:2000});
   });
 });
+import { buildInvestmentHistory as bih } from '@/lib/investor-history';
+import { test as t2, expect as e2 } from 'vitest';
+t2('profit entry adds to balance: 122000 + 7896.50 = 129896.50', () => {
+  const h = bih([{id:'i1',investor_id:'m',amount:'122000',date:'2026-01-01'}], [], 'm', [{id:'p1',amount:7896.5,date:'2026-06-01',note:'লাভ'}]);
+  e2(h.balance).toBe(129896.5); e2(h.profit).toBe(7896.5);
+  e2(h.transactions.find(x => x.type === 'profit')?.amount).toBe(7896.5);
+});
