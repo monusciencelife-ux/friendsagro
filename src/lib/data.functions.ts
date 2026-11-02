@@ -191,12 +191,15 @@ export const getInvestors = createServerFn({ method: "GET" }).handler(async () =
     .map((p) => {
       const id = v(p, "id");
       const total = byInvestor.get(id) ?? 0;
+      const ledger = investorLedger(t, id);
       return {
         id,
         name: v(p, "name"),
         phone: v(p, "phone"),
         photo_url: v(p, "photo_url"),
         total,
+        profit: ledger.profit,
+        balance: ledger.balance,
         cashout: cashoutByInvestor.get(id) ?? 0,
         pct: totalInvested > 0 ? (total / totalInvested) * 100 : 0,
       };
