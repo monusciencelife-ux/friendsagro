@@ -13,7 +13,7 @@ import {
 } from "./sheets.server";
 import { num } from "./format";
 import { completionChanges } from "./financial-plans";
-import { investorLedger } from "./accounting";
+import { investorLedger, confirmedDistributions } from "./accounting";
 
 const DATA_TABS = [
   "profiles",
@@ -48,7 +48,8 @@ export const getDashboard = createServerFn({ method: "GET" }).handler(async () =
   const t = await loadAll();
   const totalInvested = t.investments.reduce((s, r) => s + num(v(r, "amount")), 0);
   const totalCashout = t.cashouts.reduce((s, r) => s + num(v(r, "amount")), 0);
-  const netFund = totalInvested - totalCashout;
+  const creditedProfit = confirmedDistributions(t).reduce((s, d) => s + num(v(d, "profit_amount")), 0);
+  const netFund = Math.round((totalInvested - totalCashout + creditedProfit) * 100) / 100;
 
   const activeProjects = t.projects.filter((p) => v(p, "status") === "active");
   const completedProjects = t.projects.filter((p) => v(p, "status") === "completed");
