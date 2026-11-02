@@ -13,6 +13,6 @@
 - [x] Complete dated financial breakdown for active/completed projects (shared read-only view; live dataset currently has one completed project)
 - [x] Current request: every project's complete history visible to everyone; fixed parent layout hiding details, verified signed-out and signed-in access, 27 expenses, 3 sales, 4 shares, 4 distributions, list filters, chart and narrow layout; 19 tests pass; stored records unchanged
 - [ ] Confirmed project-specific profit/loss allocations, consistent summaries and duplicate protection
-- [ ] Current request: automatically credit/debit investor funds by project on completion and credit the existing ৳20,550 once by recorded percentages
+- [x] Current request: automatically credit/debit investor funds by project on completion and credit the existing ৳20,550 once by recorded percentages
 - [ ] Controlled corrections and historical allocation reconciliation
 - [ ] End-to-end test requested accounting workflows
