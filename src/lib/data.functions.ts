@@ -12,6 +12,8 @@ import {
   type Row,
 } from "./sheets.server";
 import { num } from "./format";
+import { completionChanges } from "./financial-plans";
+import { investorLedger } from "./accounting";
 
 const DATA_TABS = [
   "profiles",
@@ -436,58 +438,34 @@ export const completeProject = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ projectId: z.string() }).parse(data))
   .handler(async ({ data, context }) => {
     await requireAdmin(context);
-    const t = await readTabs(["projects", "project_steps", "project_sales", "investments"], true);
+    const t = await readTabs(["projects", "project_steps", "project_sales", "investments", "percentage_snapshots", "profit_distributions"], true);
     const project = t.projects.find((p) => v(p, "id") === data.projectId);
     if (!project) throw new Error("প্রকল্প পাওয়া যায়নি");
     if (v(project, "status") !== "active") throw new Error("প্রকল্পটি সক্রিয় নয়");
-
-    const spent = t.project_steps
-      .filter((s) => v(s, "project_id") === v(project, "id"))
-      .reduce((a, s) => a + num(v(s, "amount")), 0);
-    const sold = t.project_sales
-      .filter((s) => v(s, "project_id") === v(project, "id"))
-      .reduce((a, s) => a + num(v(s, "amount")), 0);
-    const profit = sold - spent;
-
-    // Lock each investor's share of the fund at completion time.
-    const totalInvested = t.investments.reduce((s, r) => s + num(v(r, "amount")), 0);
-    const byInvestor = new Map<string, number>();
-    for (const inv of t.investments) {
-      const id = v(inv, "investor_id");
-      byInvestor.set(id, (byInvestor.get(id) ?? 0) + num(v(inv, "amount")));
+    const ts = nowIso();
+    // Use the project's recorded shares; if none were recorded, lock current contribution percentages.
+    let snapshots = t.percentage_snapshots.filter((s) => v(s, "project_id") === data.projectId);
+    if (!snapshots.length) {
+      const totalInvested = t.investments.reduce((s, r) => s + num(v(r, "amount")), 0);
+      const byInvestor = new Map<string, number>();
+      for (const inv of t.investments) {
+        const id = v(inv, "investor_id");
+        byInvestor.set(id, (byInvestor.get(id) ?? 0) + num(v(inv, "amount")));
+      }
+      if (!totalInvested) throw new Error("বিনিয়োগকারীর অংশ নির্ধারণ করা যায়নি");
+      snapshots = [...byInvestor].map(([investorId, total]) => ({
+        id: newId(), project_id: data.projectId, investor_id: investorId,
+        percentage: String((total / totalInvested) * 100), locked_amount: String(total), created_at: ts,
+      }));
     }
-    for (const [investorId, total] of byInvestor) {
-      const pct = totalInvested > 0 ? (total / totalInvested) * 100 : 0;
-      const snapshotId = newId();
-      await appendRow("percentage_snapshots", {
-        id: snapshotId,
-        project_id: v(project, "id"),
-        investor_id: investorId,
-        percentage: String(pct),
-        locked_amount: String(total),
-        created_at: nowIso(),
-      });
-      await appendRow("profit_distributions", {
-        id: newId(),
-        project_id: v(project, "id"),
-        investor_id: investorId,
-        snapshot_id: snapshotId,
-        status: "pending",
-        profit_amount: String((profit * pct) / 100),
-        locked_amount: String(total),
-        notes: "",
-        resolved_at: "",
-        created_at: nowIso(),
-      });
+    const plan = completionChanges({ ...t, percentage_snapshots: snapshots }, data.projectId, ts, newId);
+    if (!t.percentage_snapshots.some((s) => v(s, "project_id") === data.projectId)) {
+      for (const s of snapshots) await appendRow("percentage_snapshots", s);
     }
-    await updateRow("projects", v(project, "id"), {
-      status: "completed",
-      actual_profit: String(profit),
-      completed_at: nowIso(),
-      updated_at: nowIso(),
-    });
+    for (const row of plan.inserts.profit_distributions ?? []) await appendRow("profit_distributions", row);
+    for (const u of plan.updates) await updateRow(u.tab, u.id, u.patch);
     invalidateAll();
-    return { ok: true, profit };
+    return { ok: true, profit: plan.result.profit ?? 0 };
   });
 
 export const sendChatMessage = createServerFn({ method: "POST" })
