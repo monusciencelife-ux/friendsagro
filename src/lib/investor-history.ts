@@ -8,7 +8,7 @@ export function buildInvestmentHistory(investments: HistoryRow[], cashouts: Hist
   const transactions = [
     ...investments.filter(r => read(r, 'investor_id') === investorId).map(r => ({
       id: read(r, 'id'), type: 'investment' as const, amount: Number(read(r, 'amount')) || 0,
-      date: read(r, 'date') || read(r, 'created_at'), createdAt: read(r, 'created_at'), note: '',
+      date: read(r, 'date') || read(r, 'created_at'), createdAt: read(r, 'created_at'), note: read(r, 'note'),
     })),
     ...cashouts.filter(r => read(r, 'investor_id') === investorId).map(r => ({
       id: read(r, 'id'), type: 'cashout' as const, amount: Number(read(r, 'amount')) || 0,
