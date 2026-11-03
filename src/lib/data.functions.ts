@@ -14,6 +14,7 @@ import {
 import { num } from "./format";
 import { completionChanges } from "./financial-plans";
 import { investorLedger, confirmedDistributions } from "./accounting";
+import { CHOICE_MARK, investorNotifications, profitChoice, reinvestLabel, withdrawableAmount } from "./requests-logic";
 
 const DATA_TABS = [
   "profiles",
@@ -225,8 +226,9 @@ export const getBillCauses = createServerFn({ method: "GET" }).handler(async () 
 export const getRequests = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const t = await loadAll();
+    const [t, admin, me] = await Promise.all([loadAll(), isAdminUser(context), myProfileId(context).catch(() => "")]);
     return t.requests
+      .filter((r) => admin || v(r, "from_user_id") === me)
       .map((r) => {
         let parsed: Row = {};
         try {
@@ -236,10 +238,29 @@ export const getRequests = createServerFn({ method: "GET" })
         }
         return { ...r, parsed, fromName: profileName(t.profiles, v(r, "from_user_id")) } as Row & { parsed: Row; fromName: string };
       })
-      .sort((a, b) => (b["created_at"] ?? "").localeCompare(a["created_at"] ?? ""));
+      .sort((a, b) => (b["created_at"] ?? "").localeCompare(a["created_at"] ?? ""))
+      .map((r) => ({ ...r, mine: v(r, "from_user_id") === me, viewerIsAdmin: admin }));
+  });
+
+export const getMyNotifications = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const [t, admin, me] = await Promise.all([loadAll(), isAdminUser(context), myProfileId(context).catch(() => "")]);
+    const items = me ? investorNotifications(t, me) : [];
+    return {
+      items,
+      withdrawable: me ? withdrawableAmount(t, me) : 0,
+      openChoices: items.filter((i) => i.needsChoice).length,
+      pendingRequests: admin ? t.requests.filter((r) => v(r, "status") === "pending").length : 0,
+    };
   });
 
 // ---------- Mutations ----------
+
+async function isAdminUser(context: { supabase: any; userId: string }) {
+  const { data } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+  return data === true;
+}
 
 async function requireAdmin(context: { supabase: any; userId: string }) {
   const { data: isAdmin } = await context.supabase.rpc("has_role", {
@@ -287,6 +308,55 @@ export const submitInvestmentRequest = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const submitProjectRequest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) =>
+    z.object({ name: z.string().trim().min(1).max(200), estimatedInvestment: z.number().nonnegative(), estimatedProfit: z.number().nonnegative().optional(), description: z.string().max(2000).optional() }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const profileId = await myProfileId(context);
+    await appendRow("requests", { id: newId(), type: "project_create", status: "pending", from_user_id: profileId, to_user_id: "", project_id: "",
+      data: JSON.stringify(data), created_at: nowIso(), resolved_at: "", resolved_by: "" });
+    return { ok: true };
+  });
+
+export const submitWithdrawRequest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => z.object({ amount: z.number().positive(), note: z.string().max(500).optional() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const profileId = await myProfileId(context);
+    const t = await loadAll(true);
+    if (data.amount > withdrawableAmount(t, profileId)) throw new Error("উত্তোলনযোগ্য ব্যালেন্সের চেয়ে বেশি চাওয়া হয়েছে");
+    await appendRow("requests", { id: newId(), type: "withdraw", status: "pending", from_user_id: profileId, to_user_id: "", project_id: "",
+      data: JSON.stringify({ amount: data.amount, note: data.note ?? "" }), created_at: nowIso(), resolved_at: "", resolved_by: "" });
+    return { ok: true };
+  });
+
+/** Investor picks what to do with a project's profit: reinvest into the fund, or ask admin to pay it out. */
+export const chooseProfit = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => z.object({ distributionId: z.string().min(1), choice: z.enum(["reinvest", "withdraw"]) }).parse(data))
+  .handler(async ({ data, context }) => {
+    const profileId = await myProfileId(context);
+    const t = await loadAll(true);
+    const note = investorNotifications(t, profileId).find((n) => n.id === data.distributionId);
+    if (!note) throw new Error("লাভের হিসাব পাওয়া যায়নি");
+    if (!note.needsChoice) throw new Error("এই লাভের সিদ্ধান্ত ইতিমধ্যে নেওয়া হয়েছে");
+    const d = t.profit_distributions.find((r) => v(r, "id") === data.distributionId)!;
+    if (data.choice === "reinvest") {
+      const invId = newId();
+      await appendRow("investments", { id: invId, investor_id: profileId, amount: String(note.amount), date: nowIso().slice(0, 10), created_at: nowIso() });
+      await updateRow("profit_distributions", data.distributionId, { status: "reinvested",
+        notes: `${v(d, "notes")} choice:reinvest reinvest:${invId} label:${reinvestLabel(note.amount, profileName(t.profiles, profileId), note.projectName)}`.trim() });
+    } else {
+      await updateRow("profit_distributions", data.distributionId, { notes: `${v(d, "notes")} choice:withdraw`.trim() });
+      await appendRow("requests", { id: newId(), type: "withdraw", status: "pending", from_user_id: profileId, to_user_id: "", project_id: note.projectId,
+        data: JSON.stringify({ amount: note.amount, note: `লাভ উত্তোলন — ${note.projectName}`, distributionId: data.distributionId }), created_at: nowIso(), resolved_at: "", resolved_by: "" });
+    }
+    invalidateAll();
+    return { ok: true };
+  });
+
 export const reviewRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) =>
@@ -313,6 +383,25 @@ export const reviewRequest = createServerFn({ method: "POST" })
         date: nowIso().slice(0, 10),
         created_at: nowIso(),
       });
+    }
+    let parsedReq: Row = {};
+    try { parsedReq = JSON.parse(v(req, "data") || "{}"); } catch { parsedReq = {}; }
+    if (data.decision === "approved" && v(req, "type") === "project_create") {
+      await appendRow("projects", { id: newId(), name: v(parsedReq, "name"), estimated_investment: String(num(v(parsedReq, "estimatedInvestment"))),
+        estimated_profit: v(parsedReq, "estimatedProfit") ? String(num(v(parsedReq, "estimatedProfit"))) : "", actual_profit: "", status: "active", images: "",
+        started_at: nowIso(), completed_at: "", created_at: nowIso(), updated_at: "", notes: "", manager_id: v(req, "from_user_id"), description: v(parsedReq, "description") });
+    }
+    if (v(req, "type") === "withdraw") {
+      const distId = v(parsedReq, "distributionId");
+      if (data.decision === "approved") {
+        await appendRow("cashouts", { id: newId(), investor_id: v(req, "from_user_id"), amount: String(num(v(parsedReq, "amount"))),
+          date: nowIso().slice(0, 10), note: v(parsedReq, "note") || "ব্যালেন্স উত্তোলন", created_at: nowIso() });
+      } else if (distId) {
+        // Rejected profit payout: let the investor choose again.
+        const tt = await readTabs(["profit_distributions"], true);
+        const d = tt.profit_distributions.find((r) => v(r, "id") === distId);
+        if (d && profitChoice(d) === "withdraw") await updateRow("profit_distributions", distId, { notes: v(d, "notes").replace(CHOICE_MARK, "") });
+      }
     }
     await updateRow("requests", data.id, {
       status: data.decision,

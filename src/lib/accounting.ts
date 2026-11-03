@@ -59,6 +59,6 @@ export function investorLedger(t: FinanceData, investorId: string) {
   const locked = sumAmounts(snapshots.filter(s => activeIds.has(cell(s,'project_id'))), 'locked_amount');
   return { deposited, cashout, profit, balance, locked, available: money(balance - locked), history,
     projects: snapshots.map(s => { const p = projects.find(p => cell(p,'id') === cell(s,'project_id')); return { id: cell(s,'project_id'), name: p ? cell(p,'name') : '', status: p ? cell(p,'status') : '', percentage: Number(cell(s,'percentage')), invested: money(cell(s,'locked_amount')), profit: sumAmounts(distributions.filter(d => cell(d,'snapshot_id') === cell(s,'id')), 'profit_amount') }; }),
-    pending: own('profit_distributions').filter(d => !['credited','adjustment'].includes(cell(d,'status'))),
+    pending: own('profit_distributions').filter(d => !['credited','adjustment','reinvested'].includes(cell(d,'status'))),
   };
 }

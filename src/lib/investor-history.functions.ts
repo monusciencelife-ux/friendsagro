@@ -21,7 +21,7 @@ export const getInvestorHistory = createServerFn({method: 'GET'})
     const profile = t.profiles.find(p => p['id'] === target);
     if (!profile) throw new Error('বিনিয়োগকারী প্রোফাইল পাওয়া যায়নি');
     return { profile: {id: target, name: profile['name'] ?? '', location: profile['location'] ?? ''},
-      ...buildInvestmentHistory(t.investments,t.cashouts,target, confirmedDistributions(t).filter(d => d['investor_id'] === target).map(d => {
+      ...buildInvestmentHistory(t.investments.map(r => { const d = t.profit_distributions.find(d => (d['notes'] ?? '').includes(`reinvest:${r['id']}`)); const m = d?.['notes']?.match(/label:(.+)$/); return m ? {...r, note: `পুনঃবিনিয়োগ: ${m[1]}`} : r; }),t.cashouts,target, confirmedDistributions(t).filter(d => d['investor_id'] === target).map(d => {
         const p = t.projects.find(p => p['id'] === d['project_id']);
         const amount = Math.round(Number(d['profit_amount'] || 0) * 100) / 100;
         return { id: d['id'] ?? '', amount, date: d['resolved_at'] || p?.['completed_at'] || d['created_at'] || '', note: `${amount < 0 ? 'ক্ষতি' : 'লাভ'} — ${p?.['name'] ?? 'প্রকল্প'}` };
